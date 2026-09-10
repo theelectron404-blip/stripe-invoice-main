@@ -40,6 +40,11 @@ export async function POST(request: Request) {
     let customerId: string;
     if (existingCustomers.data.length > 0) {
       customerId = existingCustomers.data[0].id;
+      // Ensure customer email and name are updated / synced
+      await stripe.customers.update(customerId, {
+        email: normalizedEmail,
+        name: name?.trim() || undefined,
+      });
     } else {
       const newCustomer = await stripe.customers.create({
         email: normalizedEmail,
@@ -86,12 +91,23 @@ export async function POST(request: Request) {
       auto_advance: false,
     });
 
-    // 5. Explicitly send invoice email via Stripe
+    // 5. Explicitly send the invoice email to the recipient via Stripe.
+    // sendInvoice emails the hosted invoice link to the customer's email address.
     let sentInvoice = finalizedInvoice;
+    let emailSent = false;
     try {
       sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id);
+      emailSent = true;
     } catch (sendErr: any) {
-      console.warn('Could not send email automatically (might already be auto-sent):', sendErr.message);
+      console.error('Failed to send invoice email to recipient:', sendErr.message);
+      // Surface the failure to the caller so the UI can report it accurately.
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Invoice was created (#${finalizedInvoice.number || finalizedInvoice.id}) but the email could not be sent to ${normalizedEmail}: ${sendErr.message}`,
+        },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({
