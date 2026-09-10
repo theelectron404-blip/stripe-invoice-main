@@ -61,22 +61,21 @@ export async function POST(request: Request) {
       const unitAmountInCents = Math.round(Number(item.unitAmount) * 100);
       const quantity = item.quantity || 1;
 
-      // 1. Create a product for this line item first so we have a product ID
-      const product = await stripe.products.create({
-        name: item.description || 'Professional Service',
-      });
-
-      // 2. Create the invoice item referencing the product ID and unit_amount
-      await stripe.invoiceItems.create({
+      // Use standard invoice item with amount/quantity, bypassing type errors with 'as any'
+      const invoiceItemParams: any = {
         customer: customerId,
         currency: currency,
-        quantity: quantity,
-        price_data: {
-          currency: currency,
-          product: product.id,
-          unit_amount: unitAmountInCents,
-        },
-      });
+        description: item.description || 'Professional Service',
+      };
+
+      if (quantity > 1) {
+        invoiceItemParams.unit_amount = unitAmountInCents;
+        invoiceItemParams.quantity = quantity;
+      } else {
+        invoiceItemParams.amount = unitAmountInCents;
+      }
+
+      await stripe.invoiceItems.create(invoiceItemParams);
     }
 
     // 3. Create the draft invoice
