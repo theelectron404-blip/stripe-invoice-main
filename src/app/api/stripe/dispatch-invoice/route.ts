@@ -61,20 +61,21 @@ export async function POST(request: Request) {
       const unitAmountInCents = Math.round(Number(item.unitAmount) * 100);
       const quantity = item.quantity || 1;
 
-      // Use price_data with inline product_data (name).
-      // This is the correct way to handle custom prices and quantity in one go.
+      // 1. Create a product for this line item first so we have a product ID
+      const product = await stripe.products.create({
+        name: item.description || 'Professional Service',
+      });
+
+      // 2. Create the invoice item referencing the product ID and unit_amount
       await stripe.invoiceItems.create({
         customer: customerId,
         currency: currency,
-        description: item.description,
+        quantity: quantity,
         price_data: {
           currency: currency,
-          product_data: {
-            name: item.description || 'Line item',
-          },
+          product: product.id,
           unit_amount: unitAmountInCents,
         },
-        quantity: quantity,
       });
     }
 
