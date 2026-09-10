@@ -58,20 +58,16 @@ export async function POST(request: Request) {
 
     // 2. Create invoice items (line items attached to customer's upcoming invoice)
     for (const item of items) {
-      const amountInCents = Math.round(Number(item.unitAmount) * 100);
+      const unitAmountInCents = Math.round(Number(item.unitAmount) * 100);
       const quantity = item.quantity || 1;
-      const payload: any = {
+
+      await stripe.invoiceItems.create({
         customer: customerId,
         currency: currency,
         description: item.description,
-      };
-      if (quantity > 1) {
-        payload.quantity = quantity;
-        payload.unit_amount = amountInCents;
-      } else {
-        payload.amount = amountInCents;
-      }
-      await stripe.invoiceItems.create(payload);
+        unit_amount: unitAmountInCents,
+        quantity: quantity,
+      });
     }
 
     // 3. Create the draft invoice
