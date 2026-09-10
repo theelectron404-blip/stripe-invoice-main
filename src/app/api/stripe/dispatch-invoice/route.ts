@@ -98,16 +98,18 @@ export async function POST(request: Request) {
     // 5. Explicitly send the invoice email to the recipient via Stripe.
     // sendInvoice emails the hosted invoice link to the customer's email address.
     let sentInvoice = finalizedInvoice;
+    let emailSendError: string | null = null;
     try {
       sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id);
     } catch (sendErr: any) {
+      emailSendError = sendErr.message;
       console.warn('Could not trigger Stripe email send (proceeding with invoice created successfully):', sendErr.message);
-      // We do not fail the request if Stripe test mode / account email settings block the automated email,
-      // because the invoice is successfully created, finalized, and has a hosted URL & PDF link!
     }
 
     return NextResponse.json({
       success: true,
+      emailSent: !emailSendError,
+      emailSendError,
       invoice: {
         id: sentInvoice.id,
         number: sentInvoice.number,
