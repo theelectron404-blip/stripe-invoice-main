@@ -56,18 +56,29 @@ export async function POST(request: Request) {
 
     const currency = (settings.currency || 'usd').toLowerCase();
 
-    // 2. Create invoice items (line items attached to customer's upcoming invoice)
+    // 2. Create invoice items (line items attached to customer's upcoming invoice).
     for (const item of items) {
       const unitAmountInCents = Math.round(Number(item.unitAmount) * 100);
       const quantity = item.quantity || 1;
 
-      await stripe.invoiceItems.create({
-        customer: customerId,
-        currency: currency,
-        description: item.description,
-        unit_amount: unitAmountInCents,
-        quantity: quantity,
-      });
+      // When quantity is 1, use amount. When > 1, use unit_amount and quantity.
+      // This is the only way to avoid the "only specify one" error AND guarantee a non-zero total.
+      if (quantity > 1) {
+        await stripe.invoiceItems.create({
+          customer: customerId,
+          currency: currency,
+          description: item.description,
+          unit_amount: unitAmountInCents,
+          quantity: quantity,
+        });
+      } else {
+        await stripe.invoiceItems.create({
+          customer: customerId,
+          currency: currency,
+          description: item.description,
+          amount: unitAmountInCents,
+        });
+      }
     }
 
     // 3. Create the draft invoice
