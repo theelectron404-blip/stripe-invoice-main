@@ -61,24 +61,21 @@ export async function POST(request: Request) {
       const unitAmountInCents = Math.round(Number(item.unitAmount) * 100);
       const quantity = item.quantity || 1;
 
-      // When quantity is 1, use amount. When > 1, use unit_amount and quantity.
-      // This is the only way to avoid the "only specify one" error AND guarantee a non-zero total.
-      if (quantity > 1) {
-        await stripe.invoiceItems.create({
-          customer: customerId,
+      // Use price_data with inline product_data (name).
+      // This is the correct way to handle custom prices and quantity in one go.
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        currency: currency,
+        description: item.description,
+        price_data: {
           currency: currency,
-          description: item.description,
+          product_data: {
+            name: item.description || 'Line item',
+          },
           unit_amount: unitAmountInCents,
-          quantity: quantity,
-        });
-      } else {
-        await stripe.invoiceItems.create({
-          customer: customerId,
-          currency: currency,
-          description: item.description,
-          amount: unitAmountInCents,
-        });
-      }
+        },
+        quantity: quantity,
+      });
     }
 
     // 3. Create the draft invoice
