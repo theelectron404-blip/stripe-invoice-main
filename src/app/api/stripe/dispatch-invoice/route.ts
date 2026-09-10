@@ -78,12 +78,12 @@ export async function POST(request: Request) {
       days_until_due: daysUntilDue,
       description: settings.memo ? settings.memo.trim() : undefined,
       footer: settings.footer ? settings.footer.trim() : undefined,
-      auto_advance: settings.autoAdvance !== false, // auto finalize & attempt payment/email
+      auto_advance: false, // Must be false so Stripe doesn't automatically mark it paid / charge test cards
     });
 
     // 4. Finalize invoice so it gets an invoice number, hosted invoice link, and PDF
     const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id, {
-      auto_advance: true,
+      auto_advance: false,
     });
 
     // 5. Explicitly send invoice email via Stripe
