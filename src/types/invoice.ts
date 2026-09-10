@@ -28,6 +28,8 @@ export interface DispatchResult {
   invoicePdf?: string;
   total?: number;
   currency?: string;
+  emailSent?: boolean;
+  emailSendError?: string | null;
   error?: string;
   timestamp?: string;
   durationMs?: number;

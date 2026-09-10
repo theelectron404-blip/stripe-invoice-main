@@ -426,6 +426,13 @@ export default function ProcessLogSection({
                           Download PDF <Download className="w-3 h-3" />
                         </a>
                       )}
+
+                      {item.emailSent === false && item.emailSendError && (
+                        <div className="w-full mt-1 text-[10px] text-amber-300 bg-amber-950/40 p-2 rounded border border-amber-900/60 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                          <span><strong>Email delivery notice:</strong> {item.emailSendError} (Invoice created successfully, use Hosted Invoice link above to share).</span>
+                        </div>
+                      )}
                     </div>
                   )}
 

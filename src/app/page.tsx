@@ -182,6 +182,8 @@ export default function Dashboard() {
             invoicePdf: data.invoice.invoicePdf,
             total: data.invoice.total,
             currency: data.invoice.currency,
+            emailSent: data.emailSent,
+            emailSendError: data.emailSendError,
             durationMs: duration,
           };
           addLog(
